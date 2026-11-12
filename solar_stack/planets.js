@@ -155,9 +155,11 @@ function drawSunBody(r) {
   ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
 }
 
-// 행성 좌표계의 -x 방향이 항상 태양 쪽이므로, 밝은 쪽을 -x 로 고정하면 명암이 저절로 맞는다.
-function drawPlanetBody(p) {
-  const ctx = drawingContext, r = p.r;
+// 행성 좌표계 안에서 태양(부모 원점)의 위치는 -(lx, ly) 이다. (translate(lx, ly) 의 역)
+// 그 방향을 밝은 쪽으로 삼으면 명암이 저절로 태양을 향한다. s 는 깊이에 따른 크기 배율.
+function drawPlanetBody(p, s = 1, lx = p.dist, ly = 0) {
+  const ctx = drawingContext, r = p.r * s;
+  const len = Math.hypot(lx, ly) || 1, ux = -lx / len, uy = -ly / len;   // 태양 쪽 단위 벡터
   if (p.atmo) {
     const g = ctx.createRadialGradient(0, 0, r * 0.92, 0, 0, r * 1.45);
     g.addColorStop(0, `rgba(${p.atmo},0.45)`);
@@ -168,7 +170,7 @@ function drawPlanetBody(p) {
   image(TEX[p.tex], -r, -r, 2 * r, 2 * r);
   ctx.save();
   ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.clip();
-  const g = ctx.createRadialGradient(-r * 0.55, 0, r * 0.15, -r * 0.55, 0, r * 2.1);
+  const g = ctx.createRadialGradient(ux * r * 0.55, uy * r * 0.55, r * 0.15, ux * r * 0.55, uy * r * 0.55, r * 2.1);
   g.addColorStop(0, 'rgba(255,255,255,0.10)');
   g.addColorStop(0.5, 'rgba(0,0,0,0)');
   g.addColorStop(0.78, 'rgba(0,0,0,0.65)');
@@ -180,12 +182,13 @@ function drawPlanetBody(p) {
 
 // 고리: 행성 뒤쪽 호(back) → 행성 → 앞쪽 호(front) 순서로 그린다.
 const RING_BANDS = [[1.3, 1.5, [200, 180, 140, 90]], [1.55, 1.85, [236, 220, 182, 215]], [1.92, 2.05, [190, 170, 130, 150]]];
-function drawRingHalf(p, front) {
+function drawRingHalf(p, front, s = 1) {
   noFill();
+  const R = p.r * s;
   RING_BANDS.forEach(([a, b, c]) => {
-    const mid = (a + b) / 2 * p.r;
+    const mid = (a + b) / 2 * R;
     stroke(c[0], c[1], c[2], c[3]);
-    strokeWeight((b - a) * p.r * 0.34);
+    strokeWeight((b - a) * R * 0.34);
     arc(0, 0, mid * 2, mid * 2 * 0.34, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
   });
 }

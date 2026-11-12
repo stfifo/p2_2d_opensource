@@ -23,6 +23,32 @@ function setup() {
 
 const orbitAngle = (p) => p.phase + TWO_PI * day / p.period;
 
+// ---- 공전 궤도면 기울기 (3D 엔진 없이 2D 계산만으로 입체감) ----
+const PLANE_DEG = 60;                          // 궤도면(장축)이 태양 진행 방향(+x)과 이루는 각
+const PLANE_RAD = PLANE_DEG * Math.PI / 180;
+const VIEW_SQUASH = 0.45;                      // 궤도면을 비스듬히 보는 정도: 평면 안의 y 를 이만큼 압축
+const VIEW_DEPTH = Math.sqrt(1 - VIEW_SQUASH ** 2);   // 나머지 성분은 화면 뒤/앞 방향(깊이 z)
+
+// 1단계: 공전 평면 안의 로컬 좌표 (localX, localY) 와 깊이 z (z > 0 이면 관찰자 쪽)
+function orbitLocal(p) {
+  const a = orbitAngle(p), s = Math.sin(a);
+  return { p, lx: p.dist * Math.cos(a), ly: p.dist * s * VIEW_SQUASH, z: p.dist * s * VIEW_DEPTH };
+}
+
+// 2단계: 2D 회전 행렬 R(60°) 로 공전 평면 전체를 태양 진행 방향 대비 기울인다
+//   | cos -sin | | lx |
+//   | sin  cos | | ly |
+function tiltPlane(lx, ly) {
+  const c = Math.cos(PLANE_RAD), s = Math.sin(PLANE_RAD);
+  return [lx * c - ly * s, lx * s + ly * c];
+}
+
+// 행성의 월드 좌표 (태양 위치 + 기울어진 궤도 위의 오프셋)
+function worldPos(p, sunX) {
+  const { lx, ly } = orbitLocal(p), [ox, oy] = tiltPlane(lx, ly);
+  return [sunX + ox, oy];
+}
+
 // 시간을 sp 일 만큼 진행. 빠른 속도에서도 궤도가 건너뛰지 않게 1일 이하로 쪼개서 계산한다.
 function advance(sp) {
   const n = Math.max(1, Math.ceil(sp)), dt = sp / n;
@@ -35,8 +61,7 @@ function sampleTrails() {
   for (const p of PLANETS) {
     if (day - p.last >= p.period / 90) {
       p.last = day;
-      const a = orbitAngle(p);
-      p.trail.push([sunX + p.dist * Math.cos(a), p.dist * Math.sin(a)]);
+      p.trail.push(worldPos(p, sunX));
     }
     while (p.trail.length > 2 && p.trail[0][0] < minX) p.trail.shift();
   }
@@ -78,46 +103,38 @@ function draw() {
   L.reset();
   L.push('Camera', '#9fb0d0');
   L.translate(W / 2 - sunX, H / 2);                 // 태양을 화면 중앙에 두는 카메라
-  for (const p of PLANETS) {
-    const a = orbitAngle(p);
-    drawFading(p.trail, [sunX + p.dist * Math.cos(a), p.dist * Math.sin(a)], p.rgb, 1.3);
-  }
+  for (const p of PLANETS) drawFading(p.trail, worldPos(p, sunX), p.rgb, 1.3);
   drawFading(sunTrail.pts, [sunX, 0], [255, 200, 90], 1.8);
 
   L.push('Sun', SUN_COLOR);
   L.translate(sunX, 0);                             // 태양의 이동: 이것만 바뀌면 자식이 모두 따라감
   noFill(); stroke(255, 255, 255, 20); strokeWeight(1);
-  for (const p of PLANETS) circle(0, 0, p.dist * 2);
-
-  L.push('Sun spin', SUN_COLOR);                    // 자전은 pop 되므로 행성에 영향 없음
-  L.rotate(TWO_PI * day / SUN_SPIN_DAYS);
-  L.draw('Sun');
-  drawSunBody(SUN_R);
-  L.pop();
-
-  for (const p of PLANETS) {                        // 같은 깊이의 형제들
-    const a = orbitAngle(p);
-    L.push(p.name, p.color);
-    L.rotate(a);
-    L.translate(p.dist, 0);
-    if (p.ring) {
-      L.push('Saturn ring (back)', p.color);
-      L.rotate(-a + RING_TILT);                     // 부모의 공전 회전을 되돌려 고리 방향 고정
-      L.draw('Saturn ring (back)');
-      drawRingHalf(p, false);
-      L.pop();
+  for (const p of PLANETS) {                        // 기울어진 궤도(타원) 가이드
+    beginShape();
+    for (let i = 0; i < 72; i++) {
+      const t = TWO_PI * i / 72;
+      const [ox, oy] = tiltPlane(p.dist * Math.cos(t), p.dist * Math.sin(t) * VIEW_SQUASH);
+      vertex(ox, oy);
     }
-    L.draw(p.name);
-    drawPlanetBody(p);
-    if (p.ring) {
-      L.push('Saturn ring (front)', p.color);
-      L.rotate(-a + RING_TILT);
-      L.draw('Saturn ring (front)');
-      drawRingHalf(p, true);
-      L.pop();
-    }
-    L.pop();
+    endShape(CLOSE);
   }
+
+  const drawSun = () => {
+    L.push('Sun spin', SUN_COLOR);                  // 자전은 pop 되므로 행성에 영향 없음
+    L.rotate(TWO_PI * day / SUN_SPIN_DAYS);
+    L.draw('Sun');
+    drawSunBody(SUN_R);
+    L.pop();
+  };
+
+  // 깊이(z) 순서로 그린다: 태양보다 뒤(z<0) 행성 → 태양 → 앞(z>0) 행성
+  const order = PLANETS.map(orbitLocal).sort((u, v) => u.z - v.z);
+  let sunDrawn = false;
+  for (const o of order) {
+    if (!sunDrawn && o.z > 0) { drawSun(); sunDrawn = true; }
+    drawPlanet(o);
+  }
+  if (!sunDrawn) drawSun();
   L.pop();   // Sun
   L.pop();   // Camera
 
@@ -128,6 +145,31 @@ function draw() {
   drawCursorAxes(vops, k, W);
   drawHud();
   drawStackPanel(W, PANEL_W, H, vops, k, view);
+}
+
+// 행성 하나: rotate(60°) 로 평면을 기울인 뒤, 평면 안의 로컬 좌표만큼 translate
+function drawPlanet({ p, lx, ly, z }) {
+  const s = 1 + 0.18 * z / p.dist;                  // 가까울수록(z>0) 크게, 멀수록 작게
+  L.push(p.name, p.color);
+  L.rotate(PLANE_RAD);
+  L.translate(lx, ly);
+  if (p.ring) {
+    L.push('Saturn ring (back)', p.color);
+    L.rotate(-PLANE_RAD + RING_TILT);               // 부모의 기울기 회전을 되돌려 고리 방향 고정
+    L.draw('Saturn ring (back)');
+    drawRingHalf(p, false, s);
+    L.pop();
+  }
+  L.draw(p.name);
+  drawPlanetBody(p, s, lx, ly);
+  if (p.ring) {
+    L.push('Saturn ring (front)', p.color);
+    L.rotate(-PLANE_RAD + RING_TILT);
+    L.draw('Saturn ring (front)');
+    drawRingHalf(p, true, s);
+    L.pop();
+  }
+  L.pop();
 }
 
 function drawHud() {
