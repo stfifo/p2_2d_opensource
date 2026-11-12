@@ -71,7 +71,7 @@ function drawStackPanel(px, pw, ph, ops, k, view = 'all') {
   fill(130, 140, 165); textSize(12);
   ['push()  맨 위 행렬을 복사해 쌓음 (부모 좌표계 기억)',
    'pop()   맨 위 행렬을 버림 (부모 좌표계로 복귀)',
-   'M_new = M_top · T · R   (오른쪽 연산부터 적용됨)',
+   'M_new = M_top * T * R   (오른쪽 연산부터 적용됨)',
    '형제(행성들)는 같은 깊이 → 서로 영향 없음'].forEach((s, i) => text(s, px + 20, 640 + i * 18));
 }
 

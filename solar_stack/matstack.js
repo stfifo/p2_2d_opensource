@@ -51,11 +51,11 @@ function replay(ops, k) {
     } else if (o.op === 'translate') {
       top.M = Mat.mul(top.M, Mat.T(o.x, o.y));
       top.lines.push({ text: `translate(${short(o.x)}, ${short(o.y)})` });
-      event = { text: `M = M · T(${short(o.x)}, ${short(o.y)})`, color: top.color };
+      event = { text: `M = M * T(${short(o.x)}, ${short(o.y)})`, color: top.color };
     } else if (o.op === 'rotate') {
       top.M = Mat.mul(top.M, Mat.R(o.rad));
       top.lines.push({ text: `rotate(${degOf(o.rad).toFixed(1)}°)` });
-      event = { text: `M = M · R(${degOf(o.rad).toFixed(1)}°)`, color: top.color };
+      event = { text: `M = M * R(${degOf(o.rad).toFixed(1)}°)`, color: top.color };
     } else if (o.op === 'draw') {
       top.lines.push({ text: `draw ${o.label}`, draw: true });
       event = { text: `현재 행렬로 ${o.label} 을(를) 그림 (원점 = 이 좌표계의 중심)`, color: top.color };
