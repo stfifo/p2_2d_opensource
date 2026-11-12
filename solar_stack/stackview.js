@@ -4,14 +4,14 @@ const LH = 19;    // 줄 높이
 
 function withAlpha(hex, a) { const c = color(hex); c.setAlpha(a); return c; }
 
-function drawStackPanel(px, pw, ph, ops, k) {
+function drawStackPanel(px, pw, ph, ops, k, view = 'all') {
   const { frames, event } = replay(ops, k);
   noStroke(); fill(10, 13, 22); rect(px, 0, pw, ph);
   stroke(40, 50, 80); strokeWeight(1); line(px, 0, px, ph);
   noStroke(); textAlign(LEFT, BASELINE);
   fill(225); textSize(15); text('Matrix Stack', px + 20, 32);
   fill(120, 130, 165); textSize(12);
-  text(`depth ${frames.length - 1}    step ${Math.min(k + 1, ops.length)}/${ops.length}`, px + 140, 32);
+  text(`depth ${frames.length - 1}    step ${Math.min(k + 1, ops.length)}/${ops.length}    보기: ${view === 'all' ? '전체' : view}`, px + 140, 32);
 
   // 1) 레이아웃: 프레임마다 시작/끝 y 를 정한다
   let y = 70;

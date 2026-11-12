@@ -9,6 +9,7 @@ let speedIdx = 2, running = false, day = 0, stepClock = 0;
 const L = new StackLog();
 const sunTrail = { pts: [], last: -Infinity };
 let stars = [], playBtn;
+let view = 'all';   // 오른쪽 스택 패널에 보여줄 천체 ('all' | 'Sun' | 행성 이름)
 
 function setup() {
   createCanvas(W + PANEL_W, H).parent('stage');
@@ -122,10 +123,11 @@ function draw() {
 
   // ---- 화면 좌표계로 돌아와 HUD / 패널 ----
   stepClock += deltaTime;
-  const k = Math.floor(stepClock / STEP_MS) % Math.max(1, L.ops.length);
-  drawCursorAxes(L.ops, k, W);
+  const vops = view === 'all' ? L.ops : filterOps(L.ops, view);   // 드롭박스로 고른 천체의 스택만
+  const k = Math.floor(stepClock / STEP_MS) % Math.max(1, vops.length);
+  drawCursorAxes(vops, k, W);
   drawHud();
-  drawStackPanel(W, PANEL_W, H, L.ops, k);
+  drawStackPanel(W, PANEL_W, H, vops, k, view);
 }
 
 function drawHud() {
@@ -156,4 +158,11 @@ function buildButtons() {
   playBtn = createButton('▶ 재생 (Enter)').parent('ui').mousePressed(toggleRun);
   createButton('▲ 빠르게 (↑)').parent('ui').mousePressed(() => setSpeed(speedIdx + 1));
   createButton('▼ 느리게 (↓)').parent('ui').mousePressed(() => setSpeed(speedIdx - 1));
+
+  // 스택 패널에 보여줄 천체 선택 드롭박스
+  const sel = createSelect().parent('ui');
+  sel.option('스택 보기: 전체', 'all');
+  sel.option('☀ Sun (태양)', 'Sun');
+  PLANETS.forEach((p) => sel.option(`${p.name} (${p.kr})`, p.name));
+  sel.changed(() => { view = sel.value(); stepClock = 0; sel.elt.blur(); });
 }

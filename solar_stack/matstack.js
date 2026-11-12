@@ -64,6 +64,25 @@ function replay(ops, k) {
   return { frames, event };
 }
 
+// 특정 천체(name)의 스택만 남긴 로그를 돌려준다. 조상 프레임(Camera, Sun)은 항상 남긴다.
+//   name 이 'Sun'    → Camera, Sun, Sun spin
+//   name 이 행성 이름 → Camera, Sun, 그 행성 프레임(토성이면 고리 프레임 포함)
+function filterOps(ops, name) {
+  const stack = [];
+  const keep = () => {
+    const top = stack[stack.length - 1];
+    if (top === 'Camera' || top === 'Sun') return true;
+    return name === 'Sun' ? stack.includes('Sun spin') : stack.includes(name);
+  };
+  const out = [];
+  for (const o of ops) {
+    if (o.op === 'push') { stack.push(o.label); if (keep()) out.push(o); }
+    else if (o.op === 'pop') { if (keep()) out.push(o); stack.pop(); }
+    else if (keep()) out.push(o);
+  }
+  return out;
+}
+
 // 재구성한 행렬이 p5 가 실제로 쓴 행렬과 같은지 최대 오차를 돌려준다. (콘솔에서 verifyStack(L.ops))
 function verifyStack(ops) {
   let maxErr = 0;
