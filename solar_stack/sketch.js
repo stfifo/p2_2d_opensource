@@ -122,7 +122,7 @@ function draw() {
   L.pop();   // Camera
 
   // ---- 화면 좌표계로 돌아와 HUD / 패널 ----
-  stepClock += deltaTime;
+  if (running) stepClock += deltaTime;   // 일시정지하면 패널도 그 step 에서 멈춤 (Space 로 한 step 씩 진행)
   const vops = view === 'all' ? L.ops : filterOps(L.ops, view);   // 드롭박스로 고른 천체의 스택만
   const k = Math.floor(stepClock / STEP_MS) % Math.max(1, vops.length);
   drawCursorAxes(vops, k, W);
@@ -142,7 +142,7 @@ function drawHud() {
     rect(140 + i * 16, H - 51, 12, 12, 2);
   }
   fill(110, 120, 145);
-  text('[Enter] 재생/정지   [↑] 빠르게   [↓] 느리게   ·  크기·거리는 축소, 공전 주기는 실제 값', 18, H - 18);
+  text('[Enter] 재생/정지  [↑↓] 속도  [Space] 정지 중 스택 한 step 진행', 18, H - 18);
 }
 
 function toggleRun() { running = !running; playBtn.html(running ? '⏸ 정지 (Enter)' : '▶ 재생 (Enter)'); }
@@ -152,12 +152,22 @@ function keyPressed() {
   if (keyCode === ENTER) { toggleRun(); return false; }
   if (keyCode === UP_ARROW) { setSpeed(speedIdx + 1); return false; }
   if (keyCode === DOWN_ARROW) { setSpeed(speedIdx - 1); return false; }
+  if (key === ' ') { stepOnce(); return false; }
+}
+
+// 일시정지 중에 스택 패널을 정확히 한 step 앞으로 보낸다
+function stepOnce() {
+  if (running) return;
+  stepClock = (Math.floor(stepClock / STEP_MS) + 1) * STEP_MS;
 }
 
 function buildButtons() {
   playBtn = createButton('▶ 재생 (Enter)').parent('ui').mousePressed(toggleRun);
   createButton('▲ 빠르게 (↑)').parent('ui').mousePressed(() => setSpeed(speedIdx + 1));
   createButton('▼ 느리게 (↓)').parent('ui').mousePressed(() => setSpeed(speedIdx - 1));
+
+  // 버튼을 클릭한 뒤 Space/Enter 가 그 버튼을 또 누르지 않도록 포커스 해제
+  window.addEventListener('click', () => { if (document.activeElement?.tagName === 'BUTTON') document.activeElement.blur(); });
 
   // 스택 패널 우측 상단에 보여줄 천체 선택 드롭박스 (#stage 안에 absolute 로 배치)
   const sel = createSelect().parent('stage').id('view-select');
