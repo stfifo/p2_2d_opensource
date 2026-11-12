@@ -183,8 +183,8 @@ function drawHud() {
     fill(i <= speedIdx ? color(120, 170, 255) : color(45, 52, 75));
     rect(140 + i * 16, H - 51, 12, 12, 2);
   }
-  fill(110, 120, 145);
-  text('[Enter] 재생/정지  [↑↓] 속도  [Space] 정지 중 스택 한 step 진행', 18, H - 18);
+  fill(175, 185, 210);
+  text('[Enter] 재생/정지   [↑↓] 속도   [Space] 정지 중 스택 한 step 진행', 18, H - 18);
 }
 
 function toggleRun() { running = !running; playBtn.html(running ? '⏸ 정지 (Enter)' : '▶ 재생 (Enter)'); }
@@ -207,6 +207,7 @@ function buildButtons() {
   playBtn = createButton('▶ 재생 (Enter)').parent('ui').mousePressed(toggleRun);
   createButton('▲ 빠르게 (↑)').parent('ui').mousePressed(() => setSpeed(speedIdx + 1));
   createButton('▼ 느리게 (↓)').parent('ui').mousePressed(() => setSpeed(speedIdx - 1));
+  createButton('Matric stack + 1 step (Space)').parent('ui').mousePressed(stepOnce);   // 정지 중에만 동작
 
   // 버튼을 클릭한 뒤 Space/Enter 가 그 버튼을 또 누르지 않도록 포커스 해제
   window.addEventListener('click', () => { if (document.activeElement?.tagName === 'BUTTON') document.activeElement.blur(); });

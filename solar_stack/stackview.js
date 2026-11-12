@@ -13,8 +13,13 @@ function drawStackPanel(px, pw, ph, ops, k, view = 'all') {
   fill(120, 130, 165); textSize(12);
   text(`depth ${frames.length - 1}    step ${Math.min(k + 1, ops.length)}/${ops.length}`, px + 140, 32);
 
+  // 현재 상태에 맞는 조작 안내 (정지 중에는 Space 로 한 step 씩 진행)
+  textSize(12);
+  fill(running ? color(130, 140, 165) : color(255, 214, 120));
+  text(running ? '재생 중: 스택이 자동으로 진행됨' : '일시정지: [Space] 를 누르면 다음 step', px + 20, 56);
+
   // 1) 레이아웃: 프레임마다 시작/끝 y 를 정한다
-  let y = 70;
+  let y = 82;
   frames.forEach((f, i) => {
     f.x = px + 20 + i * IND;
     f.y0 = y; y += LH;
