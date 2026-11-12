@@ -159,8 +159,8 @@ function buildButtons() {
   createButton('▲ 빠르게 (↑)').parent('ui').mousePressed(() => setSpeed(speedIdx + 1));
   createButton('▼ 느리게 (↓)').parent('ui').mousePressed(() => setSpeed(speedIdx - 1));
 
-  // 스택 패널에 보여줄 천체 선택 드롭박스
-  const sel = createSelect().parent('ui');
+  // 스택 패널 우측 상단에 보여줄 천체 선택 드롭박스 (#stage 안에 absolute 로 배치)
+  const sel = createSelect().parent('stage').id('view-select');
   sel.option('스택 보기: 전체', 'all');
   sel.option('☀ Sun (태양)', 'Sun');
   PLANETS.forEach((p) => sel.option(`${p.name} (${p.kr})`, p.name));

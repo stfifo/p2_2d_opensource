@@ -9,7 +9,13 @@
     html, body { margin: 0; background: var(--bg); color: var(--fg);
       font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; }
     body { display: flex; flex-direction: column; align-items: center; padding: 12px 0 24px; }
+    #stage { position: relative; }
     #stage canvas { display: block; max-width: 100vw; height: auto !important; }
+    /* 스택 패널(캔버스 오른쪽)의 우측 상단에 겹쳐 놓는 천체 선택 드롭박스 */
+    #view-select { position: absolute; top: 8px; right: 14px; width: 150px;
+      background: #151a28; color: var(--fg); border: 1px solid var(--btn-b);
+      border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+    #view-select:hover { border-color: #6c7fc0; }
     #ui { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
     #ui button { background: var(--btn); color: var(--fg); border: 1px solid var(--btn-b);
       border-radius: 6px; padding: 6px 14px; font-size: 14px; cursor: pointer; }

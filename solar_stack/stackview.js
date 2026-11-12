@@ -11,7 +11,7 @@ function drawStackPanel(px, pw, ph, ops, k, view = 'all') {
   noStroke(); textAlign(LEFT, BASELINE);
   fill(225); textSize(15); text('Matrix Stack', px + 20, 32);
   fill(120, 130, 165); textSize(12);
-  text(`depth ${frames.length - 1}    step ${Math.min(k + 1, ops.length)}/${ops.length}    보기: ${view === 'all' ? '전체' : view}`, px + 140, 32);
+  text(`depth ${frames.length - 1}    step ${Math.min(k + 1, ops.length)}/${ops.length}`, px + 140, 32);
 
   // 1) 레이아웃: 프레임마다 시작/끝 y 를 정한다
   let y = 70;
