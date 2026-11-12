@@ -1,0 +1,10 @@
+[project]
+name = "solar-matrix-stack"
+version = "0.1.0"
+description = "Solar system orbit and matrix stack visualization (p5.js mini project)"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=2.3.3",
+    "pyopengl>=3.1.10",
+    "pyopengl-accelerate>=3.1.10",
+]
